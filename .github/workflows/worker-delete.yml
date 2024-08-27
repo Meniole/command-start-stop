@@ -23,7 +23,7 @@ jobs:
       - name: Get Deleted Branch Name
         id: get_branch
         run: |
-          branch_name=$(echo ${GITHUB_REF##*/} | sed 's#[^a-zA-Z0-9]#_#g')
+          branch_name=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | sed 's#[^a-zA-Z0-9]#_#g')
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Check if Branch is Main or Development
