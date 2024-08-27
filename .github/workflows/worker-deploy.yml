@@ -19,7 +19,15 @@ jobs:
         run: corepack enable
 
       - uses: actions/checkout@v4
-      - uses: cloudflare/wrangler-action@v3
+
+      - name: Update wrangler.toml Name Field
+        run: |
+          branch_name=$(echo ${GITHUB_REF##*/} | sed 's#[^a-zA-Z0-9]#_#g')
+          sed -i "s/^name = \"\(.*\)\"$/name = \"\1_${branch_name}\"/" wrangler.toml
+
+      - name: Deploy with Wrangler
+        id: wrangler_deploy
+        uses: cloudflare/wrangler-action@v3
         with:
           wranglerVersion: "3.57.0"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -27,6 +35,13 @@ jobs:
           secrets: |
             SUPABASE_URL
             SUPABASE_KEY
+
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Extract and Write Deployment URL to Summary
+        run: |
+          deployment_url=$(echo "${{ steps.wrangler_deploy.outputs.stdout }}" | grep -oP 'https://\S+\.workers\.dev')
+          echo "### Deployment URL" >> $GITHUB_STEP_SUMMARY
+          echo "$deployment_url" >> $GITHUB_STEP_SUMMARY
