@@ -2,8 +2,9 @@ name: Delete Deployment
 
 on:
   delete:
-    branches:
-      - '**'
+    branches_ignore:
+      - development
+      - main
 
 jobs:
   delete:
@@ -26,13 +27,13 @@ jobs:
           branch_name=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | sed 's#[^a-zA-Z0-9]#_#g')
           echo "branch_name=$branch_name" >> $GITHUB_ENV
 
-      - name: Check if Branch is Main or Development
-        id: check_branch
-        run: |
-          if [[ "${{ env.branch_name }}" == "main" ]] || [[ "${{ env.branch_name }}" == "development" ]]; then
-            echo "This is the main or development branch. Skipping deletion."
-            exit 0
-          fi
+#      - name: Check if Branch is Main or Development
+#        id: check_branch
+#        run: |
+#          if [[ "${{ env.branch_name }}" == "main" ]] || [[ "${{ env.branch_name }}" == "development" ]]; then
+#            echo "This is the main or development branch. Skipping deletion."
+#            exit 0
+#          fi
 
       - name: Retrieve and Construct Full Worker Name
         id: construct_worker_name
