@@ -34,14 +34,19 @@ jobs:
             exit 0
           fi
 
+      - name: Retrieve and Construct Full Worker Name
+        id: construct_worker_name
+        run: |
+          base_name=$(grep '^name = ' wrangler.toml | sed 's/^name = "\(.*\)"$/\1/')
+          full_worker_name="${base_name}-${{ env.branch_name }}"
+          echo "full_worker_name=$full_worker_name" >> $GITHUB_ENV
+
       - name: Delete Deployment with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: delete
-        env:
-          CF_WORKER_NAME: ${{ secrets.CF_WORKER_NAME }}_${{ env.branch_name }}
+          command: delete --name ${{ env.full_worker_name }}
 
       - name: Output Deletion Result
-        run: echo "Deployment for branch ${{ env.branch_name }} has been deleted."
+        run: echo "Deployment ${{ env.full_worker_name }} has been deleted."
