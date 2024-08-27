@@ -2,7 +2,7 @@ name: Delete Deployment
 
 on:
   delete:
-    branches_ignore:
+    branches-ignore:
       - development
       - main
 
