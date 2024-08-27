@@ -1,0 +1,47 @@
+name: Delete Deployment
+
+on:
+  delete:
+    branches:
+      - '**'
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    name: Delete Deployment
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.10.0"
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/checkout@v4
+
+      - name: Get Deleted Branch Name
+        id: get_branch
+        run: |
+          branch_name=$(echo ${GITHUB_REF##*/} | sed 's#[^a-zA-Z0-9]#_#g')
+          echo "branch_name=$branch_name" >> $GITHUB_ENV
+
+      - name: Check if Branch is Main or Development
+        id: check_branch
+        run: |
+          if [[ "${{ env.branch_name }}" == "main" ]] || [[ "${{ env.branch_name }}" == "development" ]]; then
+            echo "This is the main or development branch. Skipping deletion."
+            exit 0
+          fi
+
+      - name: Delete Deployment with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: delete
+        env:
+          CF_WORKER_NAME: ${{ secrets.CF_WORKER_NAME }}_${{ env.branch_name }}
+
+      - name: Output Deletion Result
+        run: echo "Deployment for branch ${{ env.branch_name }} has been deleted."
