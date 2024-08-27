@@ -2,8 +2,6 @@ name: Deploy
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   deploy:
@@ -42,6 +40,5 @@ jobs:
 
       - name: Extract and Write Deployment URL to Summary
         run: |
-          deployment_url=$(echo "${{ steps.wrangler_deploy.outputs.deployment-url }}"
           echo "### Deployment URL" >> $GITHUB_STEP_SUMMARY
-          echo "$deployment_url" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.wrangler_deploy.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
