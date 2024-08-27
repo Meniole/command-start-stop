@@ -14,15 +14,6 @@ export const handlers = [
     }
     return HttpResponse.json(item);
   }),
-  //get member
-  http.get("https://api.github.com/orgs/:org/memberships/:username", ({ params: { username } }) => {
-    const user = db.users.findFirst({ where: { login: { equals: username as string } } });
-    if (user) {
-      return HttpResponse.json({ role: user.role });
-    } else {
-      return HttpResponse.json({ role: "collaborator" });
-    }
-  }),
   // get issue
   http.get("https://api.github.com/repos/:owner/:repo/issues", ({ params: { owner, repo } }: { params: { owner: string; repo: string } }) =>
     HttpResponse.json(db.issue.findMany({ where: { owner: { equals: owner }, repo: { equals: repo } } }))
@@ -43,25 +34,29 @@ export const handlers = [
     HttpResponse.json({ owner, repo, issueNumber })
   ),
   // get commit
-  http.get("https://api.github.com/repos/:owner/:repo/commits/:ref", () =>
-    HttpResponse.json({
+  http.get("https://api.github.com/repos/:owner/:repo/commits/:ref", () => {
+    const res = {
       data: {
         sha: "commitHash",
       },
-    })
-  ),
+    };
+
+    return HttpResponse.json(res);
+  }),
   // list pull requests
   http.get("https://api.github.com/repos/:owner/:repo/pulls", ({ params: { owner, repo } }: { params: { owner: string; repo: string } }) =>
     HttpResponse.json(db.pull.findMany({ where: { owner: { equals: owner }, repo: { equals: repo } } }))
   ),
-  // list events for an issue timeline
-  http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_number/timeline", ({ params: { owner, repo, issue_number: issueNumber } }) => {
-    return HttpResponse.json(
-      db.event.findMany({
-        where: { owner: { equals: owner as string }, repo: { equals: repo as string }, issue_number: { equals: Number(issueNumber) } },
+  // list reviews for a pull request
+  http.get("https://api.github.com/repos/:owner/:repo/pulls/:pull_number/reviews", ({ params: { owner, repo, pull_number: pullNumber } }) =>
+    HttpResponse.json(
+      db.review.findMany({
+        where: { owner: { equals: owner as string }, repo: { equals: repo as string }, pull_number: { equals: Number(pullNumber) } },
       })
-    );
-  }),
+    )
+  ),
+  // list events for an issue timeline
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_number/timeline", () => HttpResponse.json(db.event.getAll())),
   // update a pull request
   http.patch("https://api.github.com/repos/:owner/:repo/pulls/:pull_number", ({ params: { owner, repo, pull_number: pullNumber } }) =>
     HttpResponse.json({ owner, repo, pullNumber })
@@ -86,7 +81,7 @@ export const handlers = [
         db.issue.update({
           where: { id: { equals: issue.id } },
           data: {
-            assignees,
+            assignees: [...issue.assignees, ...assignees],
           },
         });
       }
@@ -101,19 +96,28 @@ export const handlers = [
   // get commit hash
   http.get("https://api.github.com/repos/:owner/:repo/commits", () => HttpResponse.json({ sha: "commitHash" })),
   // list all pull request reviews
-  http.get("https://api.github.com/repos/:owner/:repo/pulls/:pull_number/reviews", () => HttpResponse.json(db.review.getAll())),
+  http.get("https://api.github.com/repos/:owner/:repo/pulls/:pull_number/reviews", ({ params: { owner, repo, pull_number: pullNumber } }) =>
+    HttpResponse.json(
+      db.review.findMany({
+        where: { owner: { equals: owner as string }, repo: { equals: repo as string }, pull_number: { equals: Number(pullNumber) } },
+      })
+    )
+  ),
   // remove assignee from an issue
   http.delete("https://api.github.com/repos/:owner/:repo/issues/:issue_number/assignees", ({ params: { owner, repo, issue_number: issueNumber } }) =>
     HttpResponse.json({ owner, repo, issueNumber })
   ),
-  http.get("https://api.github.com/search/issues", ({ request }) => {
-    const params = new URL(request.url).searchParams;
-    const query = params.get("q");
-    const hasAssignee = query?.includes("assignee");
-    if (hasAssignee) {
-      return HttpResponse.json(db.issue.getAll());
-    } else {
-      return HttpResponse.json(db.pull.getAll());
-    }
+  // search issues
+  http.get("https://api.github.com/search/issues", () => {
+    const issues = [db.issue.findFirst({ where: { number: { equals: 1 } } })];
+    return HttpResponse.json({ items: issues });
   }),
+  // get issue by number
+  http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_number", ({ params: { owner, repo, issue_number: issueNumber } }) =>
+    HttpResponse.json(
+      db.issue.findFirst({
+        where: { owner: { equals: owner as string }, repo: { equals: repo as string }, number: { equals: Number(issueNumber) } },
+      })
+    )
+  ),
 ];

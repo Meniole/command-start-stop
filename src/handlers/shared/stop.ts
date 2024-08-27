@@ -1,8 +1,7 @@
-import { Assignee, Context, Sender } from "../../types";
+import { Assignee, Context } from "../../types";
 import { addCommentToIssue, closePullRequestForAnIssue } from "../../utils/issue";
-import { Result } from "../proxy";
 
-export async function stop(context: Context, issue: Context["payload"]["issue"], sender: Sender, repo: Context["payload"]["repository"]): Promise<Result> {
+export async function stop(context: Context, issue: Context["payload"]["issue"], sender: Context["payload"]["sender"], repo: Context["payload"]["repository"]) {
   const { logger } = context;
   const issueNumber = issue.number;
 
@@ -12,9 +11,7 @@ export async function stop(context: Context, issue: Context["payload"]["issue"],
   const userToUnassign = assignees.find((assignee: Partial<Assignee>) => assignee?.login?.toLowerCase() === sender.login.toLowerCase());
 
   if (!userToUnassign) {
-    const log = logger.error("You are not assigned to this task", { issueNumber, user: sender.login });
-    await addCommentToIssue(context, log?.logMessage.diff as string);
-    return { content: "You are not assigned to this task", status: "ok" };
+    throw new Error(logger.error("You are not assigned to this task", { issueNumber, user: sender.login })?.logMessage.diff as string);
   }
 
   // close PR
@@ -27,18 +24,26 @@ export async function stop(context: Context, issue: Context["payload"]["issue"],
 
   // remove assignee
 
-  await context.octokit.rest.issues.removeAssignees({
-    owner: login,
-    repo: name,
-    issue_number: issueNumber,
-    assignees: [sender.login],
-  });
+  try {
+    await context.octokit.rest.issues.removeAssignees({
+      owner: login,
+      repo: name,
+      issue_number: issueNumber,
+      assignees: [userToUnassign.login],
+    });
+  } catch (err) {
+    throw logger.error(`Error while removing ${userToUnassign.login} from the issue: `, {
+      err,
+      issueNumber,
+      user: userToUnassign.login,
+    });
+  }
 
   const unassignedLog = logger.info("You have been unassigned from the task", {
     issueNumber,
-    user: sender.login,
+    user: userToUnassign.login,
   });
 
   await addCommentToIssue(context, unassignedLog?.logMessage.diff as string);
-  return { content: "Task unassigned successfully", status: "ok" };
+  return { output: "Task unassigned successfully" };
 }
