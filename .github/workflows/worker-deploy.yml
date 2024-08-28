@@ -21,7 +21,7 @@ jobs:
 
       - name: Update wrangler.toml Name Field
         run: |
-          branch_name=$(echo "${{ github.event.ref }}" | sed 's#[^a-zA-Z0-9]#_#g')
+          branch_name=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | | sed 's#[^a-zA-Z0-9]#_#g')
           sed -i "s/^name = \"\(.*\)\"$/name = \"\1-${branch_name}\"/" wrangler.toml
           echo $branch_name
 
@@ -39,7 +39,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-      - name: Extract and Write Deployment URL to Summary
+      - name: Write Deployment URL to Summary
         run: |
           echo "### Deployment URL" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.wrangler_deploy.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
