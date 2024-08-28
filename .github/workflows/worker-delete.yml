@@ -41,4 +41,4 @@ jobs:
       - name: Output Deletion Result
         run: |
           echo "### Deployment URL" >> $GITHUB_STEP_SUMMARY
-          echo "Deployment ${{ env.full_worker_name }} has been deleted." >> $GITHUB_STEP_SUMMARY
+          echo "Deployment `${{ env.full_worker_name }} has been deleted."` >> $GITHUB_STEP_SUMMARY
