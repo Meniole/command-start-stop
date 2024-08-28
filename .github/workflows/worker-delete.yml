@@ -23,14 +23,14 @@ jobs:
         run: |
           branch_name=$(echo '${{ github.event.ref }}' | sed 's#refs/heads/##' | sed 's#[^a-zA-Z0-9]#-#g')
           echo "branch_name=$branch_name" >> $GITHUB_ENV
-
       - name: Retrieve and Construct Full Worker Name
         id: construct_worker_name
         run: |
           base_name=$(grep '^name = ' wrangler.toml | sed 's/^name = "\(.*\)"$/\1/')
           full_worker_name="${base_name}-${{ env.branch_name }}"
+          # Make sure that it doesnt exceed 63 characters or it will break RFC 1035
+          full_worker_name=$(echo "${full_worker_name}" | cut -c 1-63)
           echo "full_worker_name=$full_worker_name" >> $GITHUB_ENV
-
       - name: Delete Deployment with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:
