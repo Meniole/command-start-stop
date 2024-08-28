@@ -21,7 +21,7 @@ jobs:
 
       - name: Update wrangler.toml Name Field
         run: |
-          branch_name=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | | sed 's#[^a-zA-Z0-9]#_#g')
+          branch_name=$(echo "${{ github.event.ref }}" | sed 's#refs/heads/##' | sed 's#[^a-zA-Z0-9]#_#g')
           sed -i "s/^name = \"\(.*\)\"$/name = \"\1-${branch_name}\"/" wrangler.toml
           echo $branch_name
 
