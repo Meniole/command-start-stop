@@ -1,53 +1,70 @@
-# `@ubiquibot/command-start-stop`
+# `@ubiquity/ts-template`
 
-This plugin allows a hunter to begin a task as well as gracefully stop a task without incurring a negative impact on the hunter's XP or karma.
+This template repository includes support for the following:
 
-## Usage
+- TypeScript
+- Environment Variables
+- Conventional Commits
+- Automatic deployment to Cloudflare Pages
 
-### Start a task
+## Testing
 
-To start a task, a hunter should use the `/start` command. This will assign them to the issue so long as the following is true:
+### Cypress
 
-- Price labels are set on the issue
-- The issue is not already assigned
-- The hunter has not reached the maximum number of concurrent tasks
-- The command is not disabled at the repository or organization level
-- TODO: If the hunter meets the required XP requirements
+To test with Cypress Studio UI, run
 
-### Stop a task
-
-To stop a task, a hunter should use the `/stop` command. This will unassign them from the issue so long as the following is true:
-
-- The hunter is assigned to the issue
-- The command is not disabled at the repository or organization level
-- The command is called on the issue, not the associated pull request
-
-### [Configuration](./src/types/plugin-input.ts)
-
-#### Note: The command name is `"start"` when configuring your `.ubiquibot-config.yml` file.
-
-To configure your Ubiquibot to run this plugin, add the following to the `.ubiquibot-config.yml` file in your organization configuration repository.
-
-```yml
-- plugin: http://localhost:4000 # or the URL where the plugin is hosted
-  name: start-stop
-  id: start-stop-command
-  description: "Allows a user to start/stop a task without negative XP impact"
-  command: "\/start|\/stop"
-  example: "/start" # or "/stop"
-  with:
-    reviewDelayTolerance: "3 Days"
-    taskStaleTimeoutDuration: "30 Days"
-    maxConcurrentTasks: 3
-    startRequiresWallet: true # default is true
+```shell
+yarn cy:open
 ```
 
-# Testing
+Otherwise, to simply run the tests through the console, run
+
+```shell
+yarn cy:run
+```
 
 ### Jest
 
-To run the Jest test suite, run the following command:
+To start Jest tests, run
+
+```shell
+yarn test
+```
+
+## Sync any repository to latest `ts-template`
+
+A bash function that can do this for you:
 
 ```bash
-yarn test
+sync-branch-to-template() {
+  local branch_name
+  branch_name=$(git rev-parse --abbrev-ref HEAD)
+  local original_remote
+  original_remote=$(git remote show | head -n 1)
+
+  # Add the template remote
+  git remote add template https://github.com/ubiquity/ts-template
+
+  # Fetch from the template remote
+  git fetch template development
+
+  if [ "$branch_name" != "HEAD" ]; then
+    # Create a new branch and switch to it
+    git checkout -b "chore/merge-${branch_name}-template"
+
+    # Merge the changes from the template remote
+    git merge template/development --allow-unrelated-histories
+
+    # Switch back to the original branch
+    git checkout "$branch_name"
+
+    # Push the changes to the original remote
+    git push "$original_remote" HEAD:"$branch_name"
+  else
+    echo "You are in a detached HEAD state. Please checkout a branch first."
+  fi
+
+  # Remove the template remote
+  # git remote remove template
+}
 ```
