@@ -187,13 +187,18 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
 }
 
 export async function getAllPullRequestReviews(context: Context, pullNumber: number, owner: string, repo: string) {
+  const {
+    config: { rolesWithReviewAuthority },
+  } = context;
   try {
-    return (await context.octokit.paginate(context.octokit.pulls.listReviews, {
-      owner,
-      repo,
-      pull_number: pullNumber,
-      per_page: 100,
-    })) as Review[];
+    return (
+      await context.octokit.paginate(context.octokit.pulls.listReviews, {
+        owner,
+        repo,
+        pull_number: pullNumber,
+        per_page: 100,
+      })
+    ).filter((review) => rolesWithReviewAuthority.includes(review.author_association)) as Review[];
   } catch (err: unknown) {
     throw new Error(context.logger.error("Fetching all pull request reviews failed!", { error: err as Error }).logMessage.raw);
   }

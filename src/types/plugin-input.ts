@@ -11,14 +11,26 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   ref: string;
 }
 
+const rolesWithReviewAuthority = T.Array(T.String(), { default: ["COLLABORATOR", "OWNER", "MEMBER", "ADMIN"] });
+
 function maxConcurrentTasks() {
   return T.Transform(T.Record(T.String(), T.Integer(), { default: { member: 10, contributor: 2 } }))
-    .Decode((value) => {
+    .Decode((obj) => {
+      // normalize the role keys to lowercase
+      obj = Object.keys(obj).reduce(
+        (acc, key) => {
+          acc[key.toLowerCase()] = obj[key];
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
       // If admin is omitted, defaults to infinity
-      if (!Object.keys(value).includes("admin")) {
-        value["admin"] = Infinity;
+      if (!obj["admin"]) {
+        obj["admin"] = Infinity;
       }
-      return value;
+
+      return obj;
     })
     .Encode((value) => value);
 }
@@ -30,6 +42,9 @@ export const startStopSchema = T.Object(
     startRequiresWallet: T.Boolean({ default: true }),
     maxConcurrentTasks: maxConcurrentTasks(),
     emptyWalletText: T.String({ default: "Please set your wallet address with the /wallet command first and try again." }),
+    rolesWithReviewAuthority: T.Transform(rolesWithReviewAuthority)
+      .Decode((value) => value.map((role) => role.toUpperCase()))
+      .Encode((value) => value.map((role) => role.toUpperCase())),
   },
   {
     default: {},

@@ -622,6 +622,7 @@ function createContext(
       maxConcurrentTasks: maxConcurrentDefaults,
       startRequiresWallet,
       emptyWalletText: "Please set your wallet address with the /wallet command first and try again.",
+      rolesWithReviewAuthority: ["ADMIN", "OWNER", "MEMBER"],
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created" as SupportedEventsU,
