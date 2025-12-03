@@ -328,3 +328,5 @@ bun run format
 - ESLint & Prettier for code quality
 - Husky for git hooks
 - Wrangler for Cloudflare Workers deployment
+
+Some change here.
