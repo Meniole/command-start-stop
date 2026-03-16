@@ -365,5 +365,6 @@
         }
       }
     }
-  }
+  },
+  "homepage_url": "https://meniole-start-stop.deno.dev"
 }
