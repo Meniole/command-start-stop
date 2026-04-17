@@ -1,1 +1,0 @@
-collaborator self-assigned issue scenario\n
